@@ -42,7 +42,7 @@ class MethodState(TypedDict):
 
 # Read the API key from the environment to avoid hard coding secrets
 if openai:
-    openai.api_key = os.getenv("OPENAI_API_KEY", "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")
+    openai.api_key = os.getenv("OPENAI_API_KEY")
 
 @traceable(name="craft_prompt")
 def _craft_prompt(state):
@@ -93,8 +93,7 @@ def _call_llm(state):
 os.environ["LANGCHAIN_TRACING_V2"] = "true"
 os.environ["LANGCHAIN_ENDPOINT"] = "https://api.smith.langchain.com"
 os.environ["LANGCHAIN_API_KEY"] = "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"
-os.environ["LANGCHAIN_PROJECT"] = "pr-overcooked-lime-55"
-os.environ["OPENAI_API_KEY"] = "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"
+os.environ["LANGCHAIN_PROJECT"] = "JUnit_test_generation"
 
 @traceable(name="generate_junit_test")
 def generate_junit_test(java_method_code):
