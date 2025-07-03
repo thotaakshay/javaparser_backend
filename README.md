@@ -1,8 +1,8 @@
 # Java Parser Demo Backend
 
 This repository provides a simple backend service for generating JUnit tests
-from Java source code. The service exposes a small Flask API that extracts
-methods using `javaparser` and generates tests via an LLM.
+from Java source code. The service exposes a small **FastAPI** application that
+extracts methods using `javaparser` and generates tests via an LLM.
 
 ## Requirements
 
@@ -25,7 +25,7 @@ API for generating tests.
 ## Running the server
 
 ```bash
-python app.py
+uvicorn app:app --reload
 ```
 
 Send a POST request to `/generate` with JSON containing either `file_path` or
@@ -39,3 +39,10 @@ curl -X POST http://localhost:8000/generate -H 'Content-Type: application/json' 
 ```
 
 The response contains the generated JUnit test.
+
+## Asynchronous generation
+
+You can also start test generation as a background task which can be
+cancelled. Use `/start-generate` to begin generation. The response will
+include a `task_id` which can be checked via `/status/<task_id>` or
+cancelled via `/cancel/<task_id>`.
