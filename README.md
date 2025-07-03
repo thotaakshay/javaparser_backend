@@ -39,3 +39,10 @@ curl -X POST http://localhost:8000/generate -H 'Content-Type: application/json' 
 ```
 
 The response contains the generated JUnit test.
+
+## Asynchronous generation
+
+You can also start test generation as a background task which can be
+cancelled. Use `/start-generate` to begin generation. The response will
+include a `task_id` which can be checked via `/status/<task_id>` or
+cancelled via `/cancel/<task_id>`.

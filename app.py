@@ -1,6 +1,7 @@
 from flask import Flask, request, jsonify, send_file
 from extract_method import extract_method
 from junit_test_generator import generate_junit_test
+from task_manager import start_generation, cancel_task, get_status
 import os
 import io
 import zipfile
@@ -45,6 +46,42 @@ def generate():
     junit_test = generate_junit_test(method_code)
     print("Generated JUnit test:", junit_test)
     return jsonify({'junit_test': junit_test})
+
+
+@app.route('/start-generate', methods=['POST'])
+def start_generate_route():
+    data = request.get_json() if request.is_json else request.form.to_dict()
+    if not data:
+        return jsonify({'error': 'No data provided'}), 400
+
+    java_file = None
+    if data.get('code'):
+        java_file = 'TempInput.java'
+        with open(java_file, 'w') as f:
+            f.write(data['code'])
+    elif data.get('file_path'):
+        java_file = data['file_path']
+    else:
+        return jsonify({'error': 'Provide code or file_path'}), 400
+
+    method_code = extract_method(java_file)
+    if method_code is None:
+        return jsonify({'error': 'Failed to extract method'}), 500
+
+    task_id = start_generation(method_code)
+    return jsonify({'task_id': task_id})
+
+
+@app.route('/status/<task_id>', methods=['GET'])
+def get_status_route(task_id):
+    return jsonify(get_status(task_id))
+
+
+@app.route('/cancel/<task_id>', methods=['POST'])
+def cancel_route(task_id):
+    if cancel_task(task_id):
+        return jsonify({'status': 'cancelling'})
+    return jsonify({'error': 'unknown task'}), 404
 
 
 @app.route('/generate-tests', methods=['POST'])
