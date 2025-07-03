@@ -1,6 +1,7 @@
 import os
+import threading
 
-from typing import TypedDict
+from typing import TypedDict, Optional
 
 
 
@@ -57,8 +58,11 @@ Method code:
 
 
 @traceable(name="call_llm")
-def _call_llm(state):
+def _call_llm(state, cancel_event: Optional["threading.Event"] = None):
     prompt = state["prompt"]
+
+    if cancel_event and cancel_event.is_set():
+        return {"junit_test": ""}
 
     print("Using OpenAI API")
     if ChatOpenAI is not None:
@@ -96,28 +100,26 @@ os.environ["LANGCHAIN_API_KEY"] = "lsv2_pt_cd8a85e7f7834a03a8e500bc7394ddcf_f093
 os.environ["LANGCHAIN_PROJECT"] = "JUnit_test_generation"
 
 @traceable(name="generate_junit_test")
-def generate_junit_test(java_method_code):
-    if StateGraph is None:
-        # Fallback when langgraph is unavailable
-        return _call_llm(_craft_prompt({"method": java_method_code}))["junit_test"]
+def generate_junit_test(java_method_code, cancel_event: Optional["threading.Event"] = None):
+    if cancel_event and cancel_event.is_set():
+        return ""
+
+    if StateGraph is None or cancel_event is not None:
+        # Fallback when langgraph is unavailable or when cancellation is needed
+        state = {"method": java_method_code}
+        state.update(_craft_prompt(state))
+        state.update(_call_llm(state, cancel_event))
+        return state["junit_test"]
 
     sg = StateGraph(state_schema=MethodState)
-    # sg.add_node("prompt", _craft_prompt)
-    # sg.add_node("llm", _call_llm)
-    # sg.add_edge("prompt", "llm")
-    # sg.set_entry_point("prompt")
-
-
     sg.add_node("craft_prompt_node", _craft_prompt)
     sg.add_node("llm_node", _call_llm)
     sg.add_edge("craft_prompt_node", "llm_node")
     sg.set_entry_point("craft_prompt_node")
 
-
     runnable_graph = sg.compile()
     result = runnable_graph.invoke({"method": java_method_code})
 
-# result = sg.invoke({"method": java_method_code})
     return result["junit_test"]
 
 if __name__ == "__main__":
