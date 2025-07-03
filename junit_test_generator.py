@@ -42,7 +42,7 @@ class MethodState(TypedDict):
 
 # Read the API key from the environment to avoid hard coding secrets
 if openai:
-    openai.api_key = os.getenv("OPENAI_API_KEY", "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")
+    openai.api_key = os.getenv("OPENAI_API_KEY", "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")
 
 
 @traceable(name="craft_prompt")
